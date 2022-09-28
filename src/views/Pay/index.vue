@@ -76,7 +76,7 @@
         <div class="hr"></div>
 
         <div class="submit">
-          <a class="btn">立即支付</a>
+          <a class="btn" @click="open">立即支付</a>
         </div>
         <div class="otherpay">
           <div class="step-tit">
@@ -93,11 +93,15 @@
 </template>
 
 <script>
+import QRCode from "qrcode";
 export default {
   name: "Pay",
   data() {
     return {
       payInfo: {},
+      timer: null,
+      //支付状态码
+      code: "",
     };
   },
   computed: {
@@ -109,6 +113,7 @@ export default {
     this.getPayInfo();
   },
   methods: {
+    //获取支付信息
     async getPayInfo() {
       let result = await this.$API.reqPayInfo(this.orderId);
       //如果成功：组将当中存储支付信息
@@ -116,6 +121,68 @@ export default {
         this.payInfo = result.data;
       } else {
         console.log(result);
+      }
+    },
+    //弹出框
+    async open() {
+      //生成二维码(地址)
+      let url = await QRCode.toDataURL(this.payInfo.codeUrl);
+      this.$alert(`<img src=${url} />`, "请您微信支付", {
+        dangerouslyUseHTMLString: true,
+        //中间布局
+        center: true,
+        //是否显示取消按钮
+        showCancelButton: true,
+        //取消按钮的文本内容
+        cancelButtonText: "支付遇见问题",
+        //确认按钮的文本内容
+        confirmButtonText: "已支付成功",
+        //右上角关闭按钮
+        showClose: false,
+        //关闭弹出框的配置值
+        beforeClose: (type, instance, done) => {
+          //type:区分取消|确定按钮
+          //instance:当前组件实例
+          //done:关闭弹出框的方法
+          if (type == "cancel") {
+            alert("请联系管理员");
+            //清除定时器
+            clearInterval(this.timer);
+            this.timer = null;
+            //关闭弹出框
+            done();
+          } else {
+            //判断是否真的支付了
+            // if ((this.code = 200)) {
+            //清除定时器
+            clearInterval(this.timer);
+            this.timer = null;
+            //关闭弹出框
+            done();
+            //跳转到下一路由
+            this.$router.push("/paysuccess");
+            // }
+          }
+        },
+      });
+      //你需要知道支付成功|失败
+      //支付成功，路由的跳转，如果支付失败，提示信息
+      if (!this.timer) {
+        //发请求获取用户支付状态
+        this.timer = setInterval(async () => {
+          //如果code==200
+          if (result.code == 200) {
+            //第一步：清除定时器
+            clearInterval(this.timer);
+            this.timer = null;
+            //保存支付成功返回的code
+            this.code = result.code;
+            //关闭弹出框
+            this.$msgbox.close();
+            //跳转到下一路由
+            this.$router.push("/paysuccess");
+          }
+        }, 1000);
       }
     },
   },
