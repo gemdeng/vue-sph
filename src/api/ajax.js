@@ -2,6 +2,8 @@
 import axios from "axios"
 //引入进度条
 import nprogress from "nprogress"
+//在当前模块中引入store
+import store from "@/store"
 //引入进度条样式
 import "nprogress/nprogress.css"
 //start:进度条开始   done:进度条结束
@@ -20,7 +22,18 @@ const requests = axios.create({
 requests.interceptors.request.use((config) => {
     //config:配置对象,对象里面有一个属性很重要,header请求头
     //进度条开始动
+    if (store.state.detail.uuid_token) {
+        //请求头添加一个字段，和后台老师商量好了
+        config.headers.userTempId = store.state.detail.uuid_token
+
+    }
+    //需要携带token带给服务器
+    if (store.state.user.token) {
+        config.headers.token = store.state.user.token
+    }
+
     nprogress.start()
+
     return config
 })
 

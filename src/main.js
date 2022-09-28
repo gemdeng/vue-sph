@@ -14,6 +14,13 @@ import router from "@/router"
 import store from "@/store"
 //引入MockServe.js------mock数据
 import "@/mock/mockServe"
+
+//统一接口api文件夹里面全部请求函数
+//统一引入
+import * as API from '@/api'
+
+
+
 Vue.config.productionTip = false
 
 
@@ -23,6 +30,7 @@ new Vue({
   //全局事件总线$bus配置
   beforeCreate() {
     Vue.prototype.$bus = this
+    Vue.prototype.$API = API
   },
   //注册路由:底下的写法KV一致省略V【router小写的】
   // 注册路由信息：当这里书写router的时候，组件身上都拥有$router,$router属性
